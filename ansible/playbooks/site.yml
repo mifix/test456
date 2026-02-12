@@ -10,6 +10,27 @@
         name: "{{ inventory_hostname }}"
       become: true
 
+    - name: Add configured SSH public keys for ansible user
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ item }}"
+        state: present
+        manage_dir: true
+      loop: "{{ ssh_authorized_keys | default([]) }}"
+      become: true
+
+    - name: Add SSH public keys from controller files for ansible user
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ ssh_key_from_file }}"
+        state: present
+        manage_dir: true
+      vars:
+        ssh_key_from_file: "{{ lookup('ansible.builtin.file', item, errors='ignore') | trim }}"
+      loop: "{{ ssh_authorized_key_files | default([]) }}"
+      when: ssh_key_from_file | length > 0
+      become: true
+
     - name: Install base packages (SUSE, transactional)
       ansible.builtin.command:
         cmd: "transactional-update pkg install -y {{ (suse_transactional_packages | default([])) | join(' ') }}"
@@ -17,8 +38,13 @@
         - ansible_facts["os_family"] == "Suse"
         - (suse_transactional_packages | default([])) | length > 0
       register: tu_pkg_install
-      changed_when: "'Nothing to do' not in (tu_pkg_install.stdout | default(''))"
+      changed_when: >
+        (
+          (tu_pkg_install.stdout | default('') | lower)
+          is not regex('.*(zypper:\\s*nothing to update|nothing to do|no changes|discarding snapshot).*')
+        )
       become: true
+      tags: debug
 
     - name: Mark transactional reboot required (pkg install)
       ansible.builtin.set_fact:
@@ -44,11 +70,16 @@
     - name: Disable SELinux in config (transactional)
       ansible.builtin.shell: |
         transactional-update --continue run sh -c \
-          "grep -q '^SELINUX=disabled' /etc/selinux/config || \
-           sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config"
+          "if grep -q '^SELINUX=disabled' /etc/selinux/config; then
+             echo unchanged
+           else
+             sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
+             echo changed
+           fi"
       args:
         executable: /bin/sh
       register: tu_selinux_config
+      changed_when: "'changed' in (tu_selinux_config.stdout | default(''))"
       become: true
       when:
         - ansible_facts["selinux"] is defined
@@ -66,7 +97,9 @@
         reboot_command: reboot
         reboot_timeout: 900
       become: true
-      when: transactional_reboot_required | default(false)
+      when:
+        - ansible_facts["os_family"] == "Suse"
+        - transactional_reboot_required | default(false)
 
     - name: Ensure Docker service is enabled and running
       ansible.builtin.service:
