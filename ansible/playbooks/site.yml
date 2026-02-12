@@ -1,0 +1,81 @@
+---
+- name: Base checks
+  hosts: servers
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+
+    - name: Install base packages (SUSE, transactional)
+      ansible.builtin.command:
+        cmd: "transactional-update pkg install -y {{ (suse_transactional_packages | default([])) | join(' ') }}"
+      when:
+        - ansible_facts["os_family"] == "Suse"
+        - (suse_transactional_packages | default([])) | length > 0
+      register: tu_pkg_install
+      changed_when: "'Nothing to do' not in (tu_pkg_install.stdout | default(''))"
+      become: true
+
+    - name: Mark transactional reboot required (pkg install)
+      ansible.builtin.set_fact:
+        transactional_reboot_required: true
+      when:
+        - tu_pkg_install is defined
+        - tu_pkg_install.changed
+
+    - name: Read SELinux config
+      ansible.builtin.slurp:
+        src: /etc/selinux/config
+      register: selinux_config
+      when: ansible_facts["selinux"] is defined
+
+    - name: Disable SELinux runtime (if active)
+      ansible.builtin.command:
+        cmd: setenforce 0
+      become: true
+      when:
+        - ansible_facts["selinux"] is defined
+        - ansible_facts["selinux"]["status"] != "disabled"
+
+    - name: Disable SELinux in config (transactional)
+      ansible.builtin.shell: |
+        transactional-update run sh -c \
+          "grep -q '^SELINUX=disabled' /etc/selinux/config || \
+           sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config"
+      args:
+        executable: /bin/sh
+      register: tu_selinux_config
+      become: true
+      when:
+        - ansible_facts["selinux"] is defined
+        - "'SELINUX=disabled' not in (selinux_config.content | b64decode)"
+
+
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+      become: true
+
+
+    - name: Mark transactional reboot required (SELinux config)
+      ansible.builtin.set_fact:
+        transactional_reboot_required: true
+      when:
+        - tu_selinux_config is defined
+        - tu_selinux_config.changed
+
+    - name: Reboot if transactional changes were applied
+      ansible.builtin.reboot:
+        reboot_command: reboot
+        reboot_timeout: 900
+      become: true
+      when: transactional_reboot_required | default(false)
+
+# - name: Arcane
+#   import_playbook: arcane.yml
+
+- name: Komodo
+  import_playbook: komodo.yml

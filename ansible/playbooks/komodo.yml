@@ -1,0 +1,22 @@
+---
+- name: Komodo
+  hosts: server1
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+    - name: Ensure Komodo home subdir exists
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/komodo"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Deploy Komodo files
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/komodo/"
+        dest: "/home/{{ ansible_user }}/komodo/"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"

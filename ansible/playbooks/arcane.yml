@@ -1,0 +1,30 @@
+---
+- name: Arcane
+  hosts: servers
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+    - name: Ensure Arcane home subdir exists
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/arcane"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Install Arcane docker compose file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/arcane/docker-compose.yml"
+        dest: "/home/{{ ansible_user }}/arcane/docker-compose.yml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+
+    - name: Start Arcane with docker compose
+      community.docker.docker_compose_v2:
+        project_src: "/home/{{ ansible_user }}/arcane"
+        files:
+          - docker-compose.yml
+        state: present
+      become: true

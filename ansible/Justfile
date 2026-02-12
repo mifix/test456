@@ -1,0 +1,21 @@
+# Common Ansible commands
+
+set dotenv-load := false
+
+@_default:
+  just --list
+
+@list:
+  ansible-inventory --list
+
+@install-collections:
+  ansible-galaxy collection install -r collections/requirements.yml
+
+@ping:
+  ansible -m ping servers
+
+@site:
+  ansible-playbook playbooks/site.yml
+
+@check-site:
+  ansible-playbook --check --diff playbooks/site.yml
