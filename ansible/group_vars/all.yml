@@ -4,6 +4,8 @@ ansible_ssh_common_args: "-o StrictHostKeyChecking=accept-new"
 
 # Packages installed via transactional-update on SUSE hosts.
 suse_transactional_packages:
+  - docker
+  - docker-compose
   - bottom
   - python3-selinux
   - neowofetch
