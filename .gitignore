@@ -7,3 +7,7 @@ devenv.local.nix
 
 # pre-commit
 .pre-commit-config.yaml
+
+# ansible secrets
+ansible/group_vars/all.vault.yml
+ansible/.vault_pass.txt

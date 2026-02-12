@@ -1,0 +1,8 @@
+---
+# Copy this file to ansible/group_vars/all.vault.yml and encrypt it:
+#   ansible-vault encrypt ansible/group_vars/all.vault.yml
+#
+# Then provide vault password when running playbooks.
+
+komodo_secrets:
+  db_password: "CHANGE_ME"

@@ -4,6 +4,7 @@
   gather_facts: true
   vars_files:
     - ../group_vars/all.yml
+    - ../group_vars/all.vault.yml
   tasks:
     - name: Set system hostname to inventory hostname
       ansible.builtin.hostname:
@@ -19,18 +20,6 @@
       loop: "{{ ssh_authorized_keys | default([]) }}"
       become: true
 
-    - name: Add SSH public keys from controller files for ansible user
-      ansible.posix.authorized_key:
-        user: "{{ ansible_user }}"
-        key: "{{ ssh_key_from_file }}"
-        state: present
-        manage_dir: true
-      vars:
-        ssh_key_from_file: "{{ lookup('ansible.builtin.file', item, errors='ignore') | trim }}"
-      loop: "{{ ssh_authorized_key_files | default([]) }}"
-      when: ssh_key_from_file | length > 0
-      become: true
-
     - name: Install base packages (SUSE, transactional)
       ansible.builtin.command:
         cmd: "transactional-update pkg install -y {{ (suse_transactional_packages | default([])) | join(' ') }}"
@@ -44,7 +33,6 @@
           is not regex('.*(zypper:\\s*nothing to update|nothing to do|no changes|discarding snapshot).*')
         )
       become: true
-      tags: debug
 
     - name: Mark transactional reboot required (pkg install)
       ansible.builtin.set_fact:

@@ -12,9 +12,17 @@ suse_transactional_packages:
 
 # SSH keys to install for ansible_user on all servers.
 # Add full public key strings here.
-ssh_authorized_keys: []
+ssh_authorized_keys: [
+  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMEUxTA2u0BFGnsZVydmQGYbvH9YdxW8v/A5CBLb+Hvm mac@nixos"
+]
 
-# Public key files on the controller machine to install.
-# Add more paths as needed.
-ssh_authorized_key_files:
-  - "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
+
+# Komodo compose defaults (template namespace)
+komodo_compose:
+  backups_path: ./backups
+  tz: Europe/Vienna
+
+# Komodo secrets live in ansible/group_vars/all.vault.yml (encrypted with ansible-vault).
+# Expected keys:
+# komodo_secrets:
+#   db_password: "..."

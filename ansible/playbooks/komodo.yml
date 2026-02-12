@@ -4,6 +4,7 @@
   gather_facts: true
   vars_files:
     - ../group_vars/all.yml
+    - ../group_vars/all.vault.yml
   tasks:
     - name: Ensure Komodo home subdir exists
       ansible.builtin.file:
@@ -15,8 +16,16 @@
 
     - name: Deploy Komodo files
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../files/komodo/"
-        dest: "/home/{{ ansible_user }}/komodo/"
+        src: "{{ playbook_dir }}/../files/komodo/mongo.compose.yaml"
+        dest: "/home/{{ ansible_user }}/komodo/mongo.compose.yaml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+
+    - name: Render Komodo compose env file
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/komodo/compose.env.j2"
+        dest: "/home/{{ ansible_user }}/komodo/compose.env"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0644"

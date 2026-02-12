@@ -15,7 +15,14 @@ set dotenv-load := false
   ansible -m ping servers
 
 @site:
-  ansible-playbook playbooks/site.yml
+  ansible-playbook playbooks/site.yml --vault-password-file .vault_pass.txt
+
+@komodo:
+  ansible-playbook playbooks/komodo.yml --vault-password-file .vault_pass.txt
 
 @check-site:
-  ansible-playbook --check --diff playbooks/site.yml
+  ansible-playbook --check --diff playbooks/site.yml --vault-password-file .vault_pass.txt
+
+@vault-edit:
+  mkdir -p .ansible/tmp
+  ANSIBLE_LOCAL_TEMP=.ansible/tmp ansible-vault edit group_vars/all.vault.yml --vault-password-file .vault_pass.txt
