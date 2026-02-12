@@ -22,9 +22,16 @@ Keep changes simple, explicit, and easy to review.
 ## Ansible Conventions
 - Inventory lives in `ansible/inventory/hosts.ini`.
 - Common vars are in `ansible/group_vars/all.yml`.
+- Encrypted secrets live in `ansible/group_vars/all.vault.yml` and must be loaded explicitly in playbooks when needed.
 - Entry playbook is `ansible/playbooks/site.yml`.
-- Compose files go under `ansible/files/`.
+- Static compose files go under `ansible/files/`; rendered env/config templates go under `ansible/templates/`.
 - Use `community.docker.docker_compose_v2` for Compose.
+
+## Secrets
+- Never commit plaintext secrets to git.
+- Never commit vault password files (for this repo: `ansible/.vault_pass.txt` must stay ignored).
+- Use `ansible-vault` for secret values and reference them from templates/vars (example: `komodo_secrets.db_password`).
+- Prefer `just` tasks that already include vault options (`--vault-password-file`) instead of ad-hoc command variants.
 
 ## Safety
 - Don’t use destructive git commands.
