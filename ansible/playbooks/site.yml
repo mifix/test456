@@ -5,6 +5,10 @@
   vars_files:
     - ../group_vars/all.yml
   tasks:
+    - name: Set system hostname to inventory hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+      become: true
 
     - name: Install base packages (SUSE, transactional)
       ansible.builtin.command:
@@ -39,7 +43,7 @@
 
     - name: Disable SELinux in config (transactional)
       ansible.builtin.shell: |
-        transactional-update run sh -c \
+        transactional-update --continue run sh -c \
           "grep -q '^SELINUX=disabled' /etc/selinux/config || \
            sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config"
       args:
@@ -49,16 +53,6 @@
       when:
         - ansible_facts["selinux"] is defined
         - "'SELINUX=disabled' not in (selinux_config.content | b64decode)"
-
-
-
-    - name: Ensure Docker service is enabled and running
-      ansible.builtin.service:
-        name: docker
-        enabled: true
-        state: started
-      become: true
-
 
     - name: Mark transactional reboot required (SELinux config)
       ansible.builtin.set_fact:
@@ -73,6 +67,13 @@
         reboot_timeout: 900
       become: true
       when: transactional_reboot_required | default(false)
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+      become: true
 
 # - name: Arcane
 #   import_playbook: arcane.yml
