@@ -96,8 +96,8 @@
         state: started
       become: true
 
-# - name: Arcane
-#   import_playbook: arcane.yml
+- name: Arcane
+  import_playbook: arcane.yml
 
-- name: Komodo
-  import_playbook: komodo.yml
+# - name: Komodo
+#   import_playbook: komodo.yml
