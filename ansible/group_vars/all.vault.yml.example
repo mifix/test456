@@ -6,3 +6,6 @@
 
 komodo_secrets:
   db_password: "CHANGE_ME"
+
+proxy_secrets:
+  initial_admin_password: "CHANGE_ME"

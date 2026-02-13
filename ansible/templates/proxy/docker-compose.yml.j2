@@ -1,0 +1,35 @@
+---
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:{{ proxy_compose.image_tag }}'
+    restart: unless-stopped
+
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+
+    environment:
+      TZ: "Europe/Vienna"
+
+      # Uncomment this if you want to change the location of
+      # the SQLite DB file within the container
+      # DB_SQLITE_FILE: "/data/database.sqlite"
+
+      # Uncomment this if IPv6 is not enabled on your host
+      DISABLE_IPV6: 'true'
+
+      INITIAL_ADMIN_EMAIL: "{{ proxy_compose.initial_admin_email | mandatory('Set proxy_compose.initial_admin_email in ansible/group_vars/all.yml') }}"
+      INITIAL_ADMIN_PASSWORD: "{{ proxy_secrets.initial_admin_password | mandatory('Set proxy_secrets.initial_admin_password in ansible/group_vars/all.vault.yml') }}"
+
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+    healthcheck:
+      test: ["CMD", "/usr/bin/check-health"]
+      interval: 10s
+      timeout: 3s

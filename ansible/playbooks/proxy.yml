@@ -1,0 +1,31 @@
+---
+- name: Proxy
+  hosts: proxy
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/all.vault.yml
+  tasks:
+    - name: Ensure Nginx Proxy Manager home subdir exists
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/nginx-proxy-manager"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Install Nginx Proxy Manager docker compose file
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/proxy/docker-compose.yml.j2"
+        dest: "/home/{{ ansible_user }}/nginx-proxy-manager/docker-compose.yml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+
+    - name: Start Nginx Proxy Manager with docker compose
+      community.docker.docker_compose_v2:
+        project_src: "/home/{{ ansible_user }}/nginx-proxy-manager"
+        files:
+          - docker-compose.yml
+        state: present
+      become: true

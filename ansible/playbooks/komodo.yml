@@ -1,6 +1,6 @@
 ---
 - name: Komodo
-  hosts: server1
+  hosts: proxy
   gather_facts: true
   vars_files:
     - ../group_vars/all.yml

@@ -99,5 +99,8 @@
 - name: Arcane
   import_playbook: arcane.yml
 
+- name: Proxy
+  import_playbook: proxy.yml
+
 # - name: Komodo
 #   import_playbook: komodo.yml
